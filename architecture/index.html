@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LIVS — Экосистема контент-систем</title>
+<style>
+  :root{
+    --bg:#f5f4f0;--ink:#2b2f36;--ink2:#5b6167;--muted:#8a8f96;--line:#e3e2dd;
+    --brand:#e9c200;
+    /* бренд-цвета соцсетей */
+    --tg:#2AABEE;--vk:#0077FF;--yt:#FF0000;--ok:#EE8208;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);padding:36px 26px 54px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1320px;margin:0 auto}
+
+  header{text-align:center;margin-bottom:14px}
+  header h1{font-size:28px;font-weight:800;letter-spacing:-.3px}
+  header p{color:var(--ink2);margin-top:9px;font-size:14.5px}
+
+  /* брендовые зоны над колонками: слева LIVS (4), справа Vitamins Supply (1) */
+  .brandband{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin:10px 0 18px;align-items:stretch}
+  .bgroup{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:12px;border-radius:12px}
+  .bgroup.livs{grid-column:1 / 5;background:#fffdf5;border:1px solid var(--line)}
+  .bgroup.vs{grid-column:5 / 6;background:#f1f2f3;border:1px solid #dbdde1}
+  .blogo{background:#fff;border-radius:10px;padding:7px 14px;display:flex;align-items:center;justify-content:center}
+  .bgroup.livs .blogo img{height:58px;width:auto;display:block}
+  .bgroup.vs .blogo img{height:24px;width:auto;display:block}
+  .bcap{font-size:12px;color:var(--ink2);text-align:center;line-height:1.35}
+  .bcap b{color:var(--ink)}
+  @media(max-width:820px){.brandband{grid-template-columns:1fr}.bgroup.livs,.bgroup.vs{grid-column:auto}}
+
+  .band{display:flex;align-items:center;gap:14px;margin:2px 0 14px}
+  .band .pill{font-size:14px;font-weight:800;padding:6px 16px;border-radius:8px;display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);color:var(--ink)}
+  .band .pill .mk{width:9px;height:9px;border-radius:50%}
+  .band .pill.done .mk{background:#3fae4a}
+  .band .pill.plan{border-style:dashed}
+  .band .pill.plan .mk{background:var(--muted)}
+  .band .hint{font-size:12px;color:var(--muted)}
+  .band .ln{flex:1;height:1px;background:var(--line)}
+
+  .row{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;align-items:stretch}
+  .row.plan{margin:6px 0 4px}
+  /* 5-я колонка — отдельный бренд, визуально отделяем */
+  .sys.brandsplit{margin-left:6px}
+  .sys.brandsplit::before{content:"";position:absolute}
+  .brandcol-wrap{position:relative}
+  .brandtag{position:absolute;top:-11px;left:50%;transform:translateX(-50%);z-index:2;background:#6b7178;color:#fff;font-size:9.5px;font-weight:800;letter-spacing:.6px;padding:2px 10px;border-radius:20px;white-space:nowrap}
+  .logo-slot{background:#fff;border-radius:8px;padding:5px 8px;display:flex;align-items:center;justify-content:center;min-height:34px;margin-bottom:6px}
+  .logo-slot img{height:26px;width:auto;display:block}
+  .logo-slot.placeholder{border:1px dashed #b9bcc2;color:#9a9ea4;font-size:10px;font-weight:700;letter-spacing:.5px}
+
+  /* система: цвет задаётся через --c (насыщенный) и --ct (светлая заливка) */
+  .sys{background:#fff;border:1px solid var(--cb);border-top:4px solid var(--c);border-radius:12px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 1px 3px rgba(43,47,54,.07)}
+  .sys-head{padding:11px 14px;background:var(--c);color:#fff;display:flex;align-items:baseline;gap:8px}
+  .sys-head .num{font-size:10.5px;font-weight:700;opacity:.8;letter-spacing:.5px}
+  .sys-head .name{font-size:15.5px;font-weight:800}
+  .sys-body{padding:12px;display:flex;flex-direction:column;gap:8px;flex:1}
+
+  .node{border:1px solid var(--line);border-radius:9px;padding:8px 11px;background:#fbfaf7}
+  .node .lbl{font-size:10px;letter-spacing:.4px;text-transform:uppercase;color:var(--muted);font-weight:700}
+  .node .val{font-size:12.5px;color:var(--ink);margin-top:3px;line-height:1.42}
+  .node .val small{color:var(--muted)}
+  .node.step{background:var(--ct);border-color:var(--cb)}
+  .node.step .lbl{color:var(--c);filter:brightness(.8)}
+  .node.content{background:var(--ct);border-color:var(--cb);margin-top:auto}
+  .node.content .lbl{color:var(--c);filter:brightness(.8)}
+  .node.content .val{font-weight:600}
+  .flowline{align-self:center;width:1px;height:11px;background:var(--line)}
+
+  /* соцсети с логотипами-бейджами */
+  .outs{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+  .chip{display:flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);border-radius:20px;padding:3px 10px 3px 4px;font-size:11.5px;color:var(--ink);font-weight:600;text-decoration:none}
+  .chip small{color:var(--muted);font-weight:400}
+  a.chip{cursor:pointer;transition:border-color .12s,background .12s}
+  a.chip:hover{border-color:var(--c);background:var(--ct)}
+  a.chip:hover small{color:var(--c);filter:brightness(.8)}
+  a.planchip{text-decoration:none;cursor:pointer}
+  a.planchip:hover{border-color:var(--c);background:var(--ct)}
+  .ic{width:19px;height:19px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:10px;flex:0 0 auto}
+  .ic-tg{background:var(--tg)} .ic-vk{background:var(--vk)}
+  .ic-ig{background:radial-gradient(circle at 30% 107%,#fdf497 0%,#fd5949 45%,#d6249f 60%,#285AEB 90%)}
+  .ic-tt{background:#000} .ic-yt{background:var(--yt)} .ic-ok{background:var(--ok)} .ic-dz{background:#000}
+
+  /* план: тот же цвет, но бледнее */
+  .plancard{background:var(--ct);border:1px solid var(--cb);border-radius:12px;padding:12px 13px;display:flex;flex-direction:column;gap:7px;box-shadow:0 1px 3px rgba(43,47,54,.05)}
+  .plancard .ptitle{font-size:13px;font-weight:800;color:var(--c);filter:brightness(.75);padding-bottom:6px;border-bottom:1px solid var(--cb);margin-bottom:1px}
+  .plancard .pitem{background:#fff;border:1px solid var(--cb);border-radius:8px;padding:7px 10px;font-size:12.5px;color:var(--ink);line-height:1.42}
+  .plancard .pitem small{color:var(--muted)}
+  .plancard .pitem.cnt{background:#fff}
+  .plancard .pitem .k{font-weight:700;color:var(--c);filter:brightness(.75)}
+  .planchips{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+  .planchip{display:flex;align-items:center;gap:5px;background:#fff;border:1px solid var(--cb);border-radius:20px;padding:2px 9px 2px 3px;font-size:11px;color:var(--ink2);font-weight:600}
+
+  /* ростер инфлюенсеров во всю ширину */
+  .roster{margin-top:24px;border:1px solid var(--cb);border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(43,47,54,.06)}
+  .roster-head{background:var(--c);color:#fff;padding:11px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .roster-head .ttl{font-size:15px;font-weight:800}
+  .roster-head .sub{font-size:12px;color:rgba(255,255,255,.85);margin-left:auto}
+  .roster-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:14px;background:var(--ct)}
+  .rcard{background:#fff;border:1px solid var(--cb);border-radius:9px;padding:9px 11px}
+  .rcard .rn{font-weight:800;font-size:12.5px;color:var(--ink)}
+  .rcard .rh{font-size:11px;color:var(--c);filter:brightness(.82);font-weight:600;margin-top:1px}
+  .rcard .rs{font-size:11.5px;color:var(--ink2);margin-top:4px;line-height:1.38}
+  @media(max-width:900px){.roster-grid{grid-template-columns:repeat(2,1fr)}}
+
+  /* сквозной блок во всю ширину */
+  .megaplan{margin-top:14px;background:#f3f4f6;border:1px solid #d9dbe0;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(43,47,54,.05)}
+  .mega-head{background:#787d84;color:#fff;padding:11px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .mega-head .ttl{font-size:15px;font-weight:800}
+  .mega-head .cross{font-size:10.5px;font-weight:700;letter-spacing:.4px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:6px;padding:2px 8px}
+  .mega-head .sub{font-size:12px;color:#e3e5e8;margin-left:auto}
+  .mega-head .hubbtn{font-size:12px;font-weight:800;color:#fff;text-decoration:none;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.4);border-radius:8px;padding:5px 12px;transition:background .12s,transform .12s;white-space:nowrap}
+  .mega-head .hubbtn:hover{background:rgba(255,255,255,.32);transform:translateY(-1px)}
+  .mega-head .hubbtn + .sub{margin-left:12px}
+  .mega-body{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:14px}
+  .mpart{background:#fff;border:1px solid #dcdee3;border-radius:10px;padding:11px 13px}
+  .mpart .pnum{width:22px;height:22px;border-radius:50%;background:#9a9ea4;color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;margin-bottom:7px}
+  .mpart .pname{font-size:13.5px;font-weight:800;color:var(--ink)}
+  .mpart .pdesc{font-size:12px;color:var(--ink2);margin-top:4px;line-height:1.42}
+
+  /* ===== Лист 2: пайплайн ===== */
+  .sheet2{margin-top:44px;padding-top:28px;border-top:2px dashed var(--line)}
+  .sheet2 h2{text-align:center;font-size:23px;font-weight:800;letter-spacing:-.3px}
+  .sheet2 .lead{text-align:center;color:var(--ink2);font-size:14px;margin-top:8px;margin-bottom:22px}
+  .sheet2 .lead b{color:var(--ink)}
+  .pipe{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap;justify-content:center}
+  .pstep{flex:1 1 165px;min-width:165px;max-width:210px;background:#fff;border:1px solid var(--line);border-radius:11px;padding:13px;box-shadow:0 1px 3px rgba(43,47,54,.06);display:flex;flex-direction:column}
+  .pstep .pn{width:26px;height:26px;border-radius:50%;background:#5b6167;color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;margin-bottom:9px}
+  .pstep .ph{font-size:14px;font-weight:800;color:var(--ink);line-height:1.25}
+  .pstep .pd{font-size:11.8px;color:var(--ink2);margin-top:6px;line-height:1.45}
+  .pstep .gate{margin-top:9px;font-size:10.5px;font-weight:700;color:#3fae4a;background:#eef4ef;border:1px solid #cfe0d4;border-radius:6px;padding:3px 7px;align-self:flex-start}
+  .parrow{display:flex;align-items:center;color:var(--muted);font-size:20px;font-weight:700}
+  .rules{margin-top:22px;background:#f3f4f6;border:1px solid #d9dbe0;border-radius:12px;padding:14px 18px}
+  .rules .rt{font-size:13px;font-weight:800;color:var(--ink);margin-bottom:9px}
+  .rules ul{list-style:none;display:grid;grid-template-columns:repeat(2,1fr);gap:8px 22px}
+  .rules li{font-size:12.5px;color:var(--ink2);line-height:1.45;padding-left:20px;position:relative}
+  .rules li::before{content:"✓";position:absolute;left:0;top:0;color:#3fae4a;font-weight:800}
+  .rules li b{color:var(--ink)}
+  @media(max-width:720px){.rules ul{grid-template-columns:1fr}}
+
+  footer{margin-top:24px;text-align:center;color:var(--muted);font-size:12px;line-height:1.7}
+  footer b{color:var(--ink2)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Экосистема контент-систем</h1>
+    <p>Сверху — что <b>уже работает</b>, снизу тем же порядком — что <b>в планах</b>. У каждой системы свой движок и своё согласование.</p>
+  </header>
+
+  <div class="brandband">
+    <div class="bgroup livs">
+      <div class="blogo"><img src="livs_logo.png" alt="LIVS"></div>
+      <div class="bcap"><b>LIVS</b> · №1 пектиновые мармеладные витамины · системы 1–4</div>
+    </div>
+    <div class="bgroup vs">
+      <div class="blogo"><img src="vitamins_supply_logo.png" alt="Vitamins Supply"></div>
+      <div class="bcap"><b>Vitamins Supply</b> · экспертный контент</div>
+    </div>
+  </div>
+
+  <div class="band"><span class="pill done"><span class="mk"></span>УЖЕ РАБОТАЕТ</span><span class="hint">насыщенный цвет</span><div class="ln"></div></div>
+
+  <div class="row">
+
+    <!-- A · синий -->
+    <div class="sys" style="--c:#3b5bdb;--ct:#eef1fd;--cb:#cdd6f7">
+      <div class="sys-head"><span class="num">СИСТЕМА 1</span><span class="name">🤖 Ghostwriter</span></div>
+      <div class="sys-body">
+        <div class="node"><div class="lbl">Движок</div><div class="val">AI-генерация текстов, каруселей, картинок. 3 блока: техника · стиль · аналитика.</div></div>
+        <div class="flowline"></div>
+        <div class="node step"><div class="lbl">Согласование · Telegram</div><div class="val">тема → текст → картинка</div></div>
+        <div class="flowline"></div>
+        <div class="node"><div class="lbl">Публикация · канал LIVS media</div>
+          <div class="outs">
+            <a class="chip" href="https://t.me/livsmedia" target="_blank" rel="noopener"><span class="ic ic-tg">✈</span>Telegram <small>@livsmedia</small></a>
+            <a class="chip" href="https://vk.com/livsmedia" target="_blank" rel="noopener"><span class="ic ic-vk">VK</span><small>livsmedia</small></a>
+            <a class="chip" href="https://www.instagram.com/livsmediaru" target="_blank" rel="noopener"><span class="ic ic-ig">◎</span><small>@livsmediaru</small></a>
+            <a class="chip" href="https://www.tiktok.com/@livs.media6" target="_blank" rel="noopener"><span class="ic ic-tt">♪</span><small>@livs.media6</small></a>
+            <a class="chip" href="https://www.youtube.com/@livsmediaru" target="_blank" rel="noopener"><span class="ic ic-yt">▶</span>YouTube <small>@livsmediaru</small></a>
+            <a class="chip" href="https://dzen.ru/livs" target="_blank" rel="noopener"><span class="ic ic-dz">Д</span>Дзен <small>livs</small></a>
+          </div>
+        </div>
+        <div class="node content"><div class="lbl">📅 Контент</div><div class="val">Готов до 10 июля</div></div>
+      </div>
+    </div>
+
+    <!-- B · фиолетовый -->
+    <div class="sys" style="--c:#7048e8;--ct:#f2edfd;--cb:#ddd2f9">
+      <div class="sys-head"><span class="num">СИСТЕМА 2</span><span class="name">🐻 Мультфабрика</span></div>
+      <div class="sys-body">
+        <div class="node"><div class="lbl">Движок</div><div class="val">AI-мультики для детей: Мишка Ливси, продукт Mega Multi. Видео в Higgsfield.</div></div>
+        <div class="flowline"></div>
+        <div class="node step"><div class="lbl">Согласование · своя система</div><div class="val">Бот «Ливси · Мультфабрика» — отдельно от Ghostwriter</div></div>
+        <div class="flowline"></div>
+        <div class="node"><div class="lbl">Публикация</div>
+          <div class="outs">
+            <span class="chip"><span class="ic ic-yt">▶</span>YouTube <small>Ливси</small></span>
+            <a class="chip" href="https://www.instagram.com/mishka.livsi" target="_blank" rel="noopener"><span class="ic ic-ig">◎</span><small>@mishka.livsi</small></a>
+          </div>
+        </div>
+        <div class="node content"><div class="lbl">📅 Контент</div><div class="val">1 мультик готов <small>(пилот)</small></div></div>
+      </div>
+    </div>
+
+    <!-- C · розовый -->
+    <div class="sys" style="--c:#e64980;--ct:#fdeef4;--cb:#f8d1e0">
+      <div class="sys-head"><span class="num">СИСТЕМА 3</span><span class="name">👩 AI-инфлюенсеры</span></div>
+      <div class="sys-body">
+        <div class="node"><div class="lbl">Движок</div><div class="val">Виртуальные блогеры: Soul ID в Higgsfield, единая палитра образа, правила реализма.</div></div>
+        <div class="flowline"></div>
+        <div class="node step"><div class="lbl">Флагман · в эфире</div><div class="val"><b>Лера Морозкина</b> — пилот уже постит.</div>
+          <div class="outs"><a class="chip" href="https://www.instagram.com/leramorozkinaa" target="_blank" rel="noopener"><span class="ic ic-ig">◎</span><small>@leramorozkinaa</small></a></div>
+        </div>
+        <div class="flowline"></div>
+        <div class="node"><div class="lbl">Ростер · +12 персонажей</div><div class="val">Ещё <b>12 AI-персонажей</b> в производстве — все в Instagram, у каждого имя, образ и ниша. Полный список ниже ↓</div></div>
+        <div class="node content"><div class="lbl">📅 Контент</div><div class="val">Лера — на пару дней вперёд; ростер запускаем</div></div>
+      </div>
+    </div>
+
+    <!-- D · бирюзовый -->
+    <div class="sys" style="--c:#0ca678;--ct:#e6faf3;--cb:#bcecdb">
+      <div class="sys-head"><span class="num">СИСТЕМА 4</span><span class="name">🤝 UGC / амбассадоры</span></div>
+      <div class="sys-body">
+        <div class="node"><div class="lbl">Архитектура</div><div class="val">Воронка привлечения живых блогеров за бартер. Про людей, не про постинг.</div></div>
+        <div class="flowline"></div>
+        <div class="node step"><div class="lbl">Воронка · 4 блока</div><div class="val">приток → бот → выход → аналитика<br><small>Telegram-бот + Google Sheets</small></div>
+          <div class="outs"><a class="chip" href="https://t.me/livs_influence_bot" target="_blank" rel="noopener"><span class="ic ic-tg">✈</span>@livs_influence_bot</a></div>
+        </div>
+        <div class="flowline"></div>
+        <div class="node"><div class="lbl">Как работает</div><div class="val">Блогеры получают <b>образец</b> → публикуют у себя.</div></div>
+        <div class="node content"><div class="lbl">📅 Контент</div><div class="val">~5–7 блогеров публикуют у себя</div></div>
+      </div>
+    </div>
+
+    <!-- 5 · отдельный бренд Vitamins Supply · экспертный контент (серый) -->
+    <div class="brandcol-wrap">
+      <div class="sys brandsplit" style="--c:#6b7178;--ct:#f1f2f3;--cb:#dbdde1">
+        <div class="sys-head"><span class="num">VITAMINS SUPPLY</span><span class="name">🩺 Экспертный контент</span></div>
+        <div class="sys-body">
+          <div class="node"><div class="lbl">Формат</div><div class="val">Отдельный бренд про здоровье: <b>эксперт-врач</b> объясняет простым языком.</div></div>
+          <div class="flowline"></div>
+          <div class="node step"><div class="lbl">Персонаж</div><div class="val">Один AI-эксперт (врач) — ведёт аккаунт как инфлюенсер, от первого лица.</div></div>
+          <div class="flowline"></div>
+          <div class="node"><div class="lbl">Публикация · Instagram</div>
+            <div class="outs"><span class="chip"><span class="ic ic-ig">◎</span><small>один аккаунт</small></span></div>
+          </div>
+          <div class="node content"><div class="lbl">📅 Контент</div><div class="val">Запуск — готовим первый контент</div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="band" style="margin-top:22px"><span class="pill plan"><span class="mk"></span>В ПЛАНАХ</span><span class="hint">тот же цвет, бледнее</span><div class="ln"></div></div>
+
+  <div class="row plan">
+
+    <div class="plancard" style="--c:#3b5bdb;--ct:#f6f8fe;--cb:#dbe2fb">
+      <div class="ptitle">🤖 Ghostwriter</div>
+      <div class="pitem cnt"><span class="k">Контент до конца июля</span> <small>— доделать посты после 10-го</small></div>
+      <div class="pitem">Новая площадка:
+        <div class="planchips"><span class="planchip"><span class="ic ic-ok">OK</span>Одноклассники</span></div>
+      </div>
+      <div class="pitem"><b>Отдельные каналы</b> — свой тип контента:
+        <div class="planchips"><span class="planchip">🧒 LIVS Kids</span><span class="planchip">🎓 Экспертный контент</span></div>
+      </div>
+      <div class="pitem"><b>Видео-посты</b> — переформатируем текстовые посты в видео.</div>
+    </div>
+
+    <div class="plancard" style="--c:#7048e8;--ct:#f8f5fe;--cb:#e6dcfb">
+      <div class="ptitle">🐻 Мультфабрика</div>
+      <div class="pitem cnt"><span class="k">~10 мультиков на июль</span> <small>— выкладывать раз в 3 дня</small></div>
+      <div class="pitem"><b>Создать TikTok-аккаунт</b> и запустить публикацию мультиков туда.
+        <div class="planchips"><span class="planchip"><span class="ic ic-tt">♪</span>TikTok — надо создать</span></div>
+      </div>
+    </div>
+
+    <div class="plancard" style="--c:#e64980;--ct:#fef5f8;--cb:#f9dbe6">
+      <div class="ptitle">👩 AI-инфлюенсеры</div>
+      <div class="pitem cnt"><span class="k">Ежедневный контент</span> <small>— 1 единица в день на блогера</small></div>
+      <div class="pitem"><b>Ещё 3 AI-блогера</b> — каждый в своём направлении / нише.
+        <div class="planchips"><span class="planchip">#2</span><span class="planchip">#3</span><span class="planchip">#4</span></div>
+      </div>
+    </div>
+
+    <div class="plancard" style="--c:#0ca678;--ct:#f0fbf6;--cb:#cdefdf">
+      <div class="ptitle">🤝 UGC / амбассадоры · масштаб</div>
+      <div class="pitem cnt"><span class="k">Набрать больше амбассадоров</span> <small>— сколько наберём, столько публикаций</small></div>
+      <div class="pitem"><b>1. Свои клиенты</b> — предложить участие тем, кто уже был у нас.</div>
+      <div class="pitem"><b>2. Платные посты / подписка</b> — размещение в бартерных Telegram-каналах про UGC.</div>
+    </div>
+
+    <div class="plancard" style="--c:#6b7178;--ct:#f1f2f3;--cb:#dbdde1">
+      <div class="ptitle">🩺 Экспертный контент</div>
+      <div class="pitem cnt"><span class="k">Запуск аккаунта</span> <small>— собрать образ врача-эксперта (Soul ID) и наполнить контентом</small></div>
+      <div class="pitem"><b>Instagram</b> — один аккаунт, ведём как инфлюенсера.</div>
+    </div>
+
+  </div>
+
+  <!-- ростер AI-инфлюенсеров: 12 персонажей -->
+  <div class="roster" style="--c:#e64980;--ct:#fdeef4;--cb:#f8d1e0">
+    <div class="roster-head">
+      <span class="ttl">👩 Ростер AI-инфлюенсеров — 12 персонажей</span>
+      <span class="sub">все в Instagram · у каждого свой образ, имя и ниша</span>
+    </div>
+    <div class="roster-grid">
+      <div class="rcard"><div class="rn">Ника Стрельцова</div><div class="rh">@nika.streltsova</div><div class="rs">«Сила в теле» — атлетка, сильная и женственная.</div></div>
+      <div class="rcard"><div class="rn">Аня Светлова</div><div class="rh">@anya.svetlova</div><div class="rs">«Новая глава» — спокойствие нового начала, 34.</div></div>
+      <div class="rcard"><div class="rn">Тома + Мила</div><div class="rh">@toma.i.mila</div><div class="rs">Дуэт поколений — бабушка 72 и внучка 19.</div></div>
+      <div class="rcard"><div class="rn">Даша Мельник</div><div class="rh">@dasha.pro.eda</div><div class="rs">Нутрициолог по-человечески — «своя», не врач в халате.</div></div>
+      <div class="rcard"><div class="rn">Соня Заря</div><div class="rh">@sonya.zarya</div><div class="rs">«Расцвела» — свежая здоровая красота, сияющая кожа.</div></div>
+      <div class="rcard"><div class="rn">Ира Вольнова</div><div class="rh">@ira.volno</div><div class="rs">«Свой путь» — минимал-люкс, self-made энергия.</div></div>
+      <div class="rcard"><div class="rn">Поля Кузнецова</div><div class="rh">@polya.kak.est</div><div class="rs">«Живая, а не идеальная» — реальная, без фильтров.</div></div>
+      <div class="rcard"><div class="rn">Настя Крылова</div><div class="rh">@nastya.krylova</div><div class="rs">«Первый раз во взрослом» — дневниковая нежность.</div></div>
+      <div class="rcard"><div class="rn">Марго Луна</div><div class="rh">@margo.luna</div><div class="rs">«Гадалка по-новому» — богемная ведьма без китча.</div></div>
+      <div class="rcard"><div class="rn">Влада Мар</div><div class="rh">@vlada.nomad</div><div class="rs">«Уехала одна с нуля» — тревел, южный свет.</div></div>
+      <div class="rcard"><div class="rn">Катя Соловьёва</div><div class="rh">@katya.keramika</div><div class="rs">«Своё дело» — мастерица-керамистка, руки в глине.</div></div>
+      <div class="rcard"><div class="rn">Марина Штерн</div><div class="rh">@marina.captain</div><div class="rs">«Капитан» — сильная, спокойная власть у штурвала.</div></div>
+    </div>
+  </div>
+
+  <!-- сквозной блок: правила увеличения охвата (для всех аккаунтов) -->
+  <div class="megaplan" style="--c:#2f9e44">
+    <div class="mega-head" style="background:#2f9e44">
+      <span class="ttl">📈 Правила увеличения охвата</span>
+      <span class="cross">ДЛЯ ВСЕХ АККАУНТОВ</span>
+      <span class="sub">живой охват важнее числа подписчиков</span>
+    </div>
+    <div class="rules" style="margin:0;border:0;border-radius:0;background:#f4faf5">
+      <ul>
+        <li><b>Reels / видео — драйвер №1.</b> Алгоритмы сильнее всего разгоняют короткие видео — приоритет Reels во всех аккаунтах.</li>
+        <li><b>Активная живая аудитория.</b> Платформа показывает контент шире, когда подписчики реально реагируют (лайки, комменты, досмотры), а не просто «числятся».</li>
+        <li><b>Вычистили ботов и мёртвых подписчиков.</b> Убрали накрутку из аккаунтов, чтобы охват шёл на живых людей <small>— заняло много времени, но это база честного роста</small>.</li>
+        <li><b>Вовлечение важнее количества.</b> Лучше меньше подписчиков, но живых — под них алгоритм и раздаёт охват.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- сквозной блок: центр вопросов и отзывов (маркетплейсы) -->
+  <div class="megaplan" style="--c:#f08c00">
+    <div class="mega-head" style="background:#e8820a">
+      <span class="ttl">🛒 Центр вопросов и отзывов</span>
+      <span class="cross">МАРКЕТПЛЕЙСЫ · Ozon · WB · Яндекс Маркет</span>
+      <a class="hubbtn" href="https://gptbossmode-dotcom.github.io/marketplaces/" target="_blank" rel="noopener">📊 Открыть BI-хаб →</a>
+      <span class="sub">работает · автоответы — через Ответо.ру</span>
+    </div>
+    <div class="mega-body">
+      <div class="mpart">
+        <div class="pnum" style="background:#e8820a">1</div>
+        <div class="pname">Сбор по API</div>
+        <div class="pdesc">Вопросы и отзывы со всех маркетплейсов стекаются к нам: Ozon (779 вопросов), Яндекс Маркет (1596 отзывов), WB — по мере токена.</div>
+      </div>
+      <div class="mpart">
+        <div class="pnum" style="background:#e8820a">2</div>
+        <div class="pname">BI-хаб + база «Вопрос-Ответ»</div>
+        <div class="pdesc">Аналитика: что спрашивают — по товарам, типам, частоте. 265 эталонных ответов поддержки — инструмент «что отвечать».</div>
+      </div>
+      <div class="mpart">
+        <div class="pnum" style="background:#e8820a">3</div>
+        <div class="pname">Автоответы — Ответо.ру</div>
+        <div class="pdesc">Сами ответы клиентам на маркетплейсах шлёт внешний сервис <b>Ответо.ру</b>. Мы читаем данные для аналитики и готовим базу ответов — публикацию ответов не делаем.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- сквозной блок: статус публикаций (ежедневный контроль) -->
+  <div class="megaplan" style="--c:#0c8599">
+    <div class="mega-head" style="background:#0c8599">
+      <span class="ttl">✅ Статус публикаций</span>
+      <span class="cross">ЕЖЕДНЕВНЫЙ КОНТРОЛЬ · автоматически</span>
+      <span class="sub">работает · отчёт каждый день 11:30</span>
+    </div>
+    <div class="mega-body">
+      <div class="mpart">
+        <div class="pnum" style="background:#0c8599">1</div>
+        <div class="pname">Что проверяет</div>
+        <div class="pdesc">Читает очередь публикаций и сверяет, что реально вышло сегодня по каждой площадке (Telegram, VK, Instagram, TikTok, YouTube…).</div>
+      </div>
+      <div class="mpart">
+        <div class="pnum" style="background:#0c8599">2</div>
+        <div class="pname">Куда шлёт отчёт</div>
+        <div class="pdesc">Сводка <b>ok / ok / ok</b> в отдельную Telegram-группу <b>«Статус публикаций»</b> — видно сразу, если где-то ничего не вышло.</div>
+      </div>
+      <div class="mpart">
+        <div class="pnum" style="background:#0c8599">3</div>
+        <div class="pname">Расписание</div>
+        <div class="pdesc">Запускается сам каждый день в <b>11:30</b> — не нужно заходить и проверять руками. «Сегодня всё вышло» приходит одним сообщением.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- сквозной блок: единая система общения (в планах, общая для всех) -->
+  <div class="megaplan">
+    <div class="mega-head">
+      <span class="ttl">💬 Единая система общения</span>
+      <span class="cross">ОБЩАЯ ДЛЯ ВСЕХ ПЛАТФОРМ</span>
+      <span class="sub">в планах · пока не развёрнута</span>
+    </div>
+    <div class="mega-body">
+      <div class="mpart">
+        <div class="pnum">1</div>
+        <div class="pname">Обработка сообщений со всех платформ</div>
+        <div class="pdesc">Все входящие (Telegram, VK, Instagram, TikTok, YouTube…) стекаются в один центр — отвечаем из одного места.</div>
+      </div>
+      <div class="mpart">
+        <div class="pnum">2</div>
+        <div class="pname">LIVS Помощница <small style="font-weight:600;color:#c0392b">· отложено</small></div>
+        <div class="pdesc">Ассистент бренда: подсказывает по продуктам, ведёт диалог, помогает клиенту. Пилот sales-бота <b>@livsgummy_bot</b> есть. Чтобы запустить всерьёз — доделать на ИИ либо пересобрать бота на компе. <b>Пока отложил.</b></div>
+      </div>
+      <div class="mpart">
+        <div class="pnum">3</div>
+        <div class="pname">Автоответы</div>
+        <div class="pdesc">Мгновенные ответы на частые вопросы и комментарии без участия человека.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== ЛИСТ 2: ПАЙПЛАЙН ===================== -->
+  <div class="sheet2">
+    <h2>🎬 Как мы делаем AI-блогеров и видео</h2>
+    <div class="lead">Единый продакшн-процесс для всех роликов — <b>Лера Морозкина</b>, новые блогеры, <b>Мишка Ливси</b>, видео-посты. Согласуем поэтапно, правим покадрово — чтобы не жечь кредиты.</div>
+
+    <div class="pipe">
+      <div class="pstep">
+        <div class="pn">1</div>
+        <div class="ph">Идея</div>
+        <div class="pd">Концепт ролика: о чём, вайб, длина, на какой площадке выходит.</div>
+      </div>
+      <div class="parrow">→</div>
+      <div class="pstep">
+        <div class="pn">2</div>
+        <div class="ph">Покадровый сценарий</div>
+        <div class="pd">Разбиваем на кадры/шоты: сцена, действие, длительность, реплика.</div>
+        <div class="gate">утвердить ДО картинок</div>
+      </div>
+      <div class="parrow">→</div>
+      <div class="pstep">
+        <div class="pn">3</div>
+        <div class="ph">Лист персонажа (Soul ID)</div>
+        <div class="pd">Фиксируем внешность героя один раз — якорь для всех кадров. Внешность заперта, движение — отдельно.</div>
+      </div>
+      <div class="parrow">→</div>
+      <div class="pstep">
+        <div class="pn">4</div>
+        <div class="ph">Сториборд (картинки)</div>
+        <div class="pd">На каждый кадр — статичная раскадровка от Soul ID (дешёвая модель).</div>
+        <div class="gate">утвердить визуал ДО анимации</div>
+      </div>
+      <div class="parrow">→</div>
+      <div class="pstep">
+        <div class="pn">5</div>
+        <div class="ph">Анимация + склейка</div>
+        <div class="pd">Оживляем короткими клипами 3–4 сек с чейнингом, затем склеиваем в ролик.</div>
+      </div>
+      <div class="parrow">→</div>
+      <div class="pstep">
+        <div class="pn">6</div>
+        <div class="ph">Правки покадрово</div>
+        <div class="pd">Меняем только затронутый клип и ре-склеиваем. Не перегенерируем весь ролик.</div>
+      </div>
+    </div>
+
+    <div class="rules">
+      <div class="rt">Правила пайплайна</div>
+      <ul>
+        <li><b>Согласование поэтапно</b> — как с постами: идея → сценарий → сториборд → анимация, каждый шаг отдельно.</li>
+        <li><b>Дорогое — после дешёвого</b>: утверждаем на статичных кадрах, только потом платная анимация.</li>
+        <li><b>Soul ID переиспользуем</b> — у существующего героя не создаём заново, персонаж не «плывёт» между кадрами.</li>
+        <li><b>Правки на уровне кадра</b>, не всего ролика — главная экономия кредитов на видео.</li>
+      </ul>
+    </div>
+  </div>
+
+  <footer>
+    <p>Один бренд <b>LIVS</b> · верхний ряд — работает сейчас · нижний ряд — куда растём · каждый столбец — своя система (свой цвет)</p>
+  </footer>
+</div>
+</body>
+</html>
